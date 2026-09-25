@@ -43,6 +43,8 @@ var knockback_left := 0.0
 var knockback_direction := Vector3.ZERO
 var status: Label
 var counters: Label
+var energy_value: Label
+var energy_pips: Label
 var hand_row: Control
 var discard_label: Label
 var message := "Cannons auto-aim at the nearest clear raft in range. Sail closer for short-range shots."
@@ -244,12 +246,45 @@ func build_ui(layer: CanvasLayer) -> void:
 	header.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	header.offset_left = 32
 	header.offset_right = -32
-	header.offset_top = -319
-	header.offset_bottom = -291
+	header.offset_top = -329
+	header.offset_bottom = -285
+	header.add_theme_constant_override("separation", 10)
 	counters = Label.new()
 	counters.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	counters.add_theme_color_override("font_color", Color("e4cea0"))
 	header.add_child(counters)
+	var energy_panel := PanelContainer.new()
+	energy_panel.custom_minimum_size = Vector2(154, 44)
+	var energy_style := StyleBoxFlat.new()
+	energy_style.bg_color = Color("263e3a")
+	energy_style.border_color = Color("d7b866")
+	energy_style.set_border_width_all(2)
+	energy_style.set_corner_radius_all(6)
+	energy_style.set_content_margin_all(6)
+	energy_panel.add_theme_stylebox_override("panel", energy_style)
+	header.add_child(energy_panel)
+	var energy_row := HBoxContainer.new()
+	energy_row.add_theme_constant_override("separation", 8)
+	energy_panel.add_child(energy_row)
+	energy_value = Label.new()
+	energy_value.custom_minimum_size.x = 32
+	energy_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	energy_value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	energy_value.add_theme_color_override("font_color", Color("f5dea0"))
+	energy_value.add_theme_font_size_override("font_size", 26)
+	energy_row.add_child(energy_value)
+	var energy_details := VBoxContainer.new()
+	energy_details.add_theme_constant_override("separation", -2)
+	energy_row.add_child(energy_details)
+	var energy_title := Label.new()
+	energy_title.text = "ENERGY / ROUND"
+	energy_title.add_theme_color_override("font_color", Color("e4cea0"))
+	energy_title.add_theme_font_size_override("font_size", 10)
+	energy_details.add_child(energy_title)
+	energy_pips = Label.new()
+	energy_pips.add_theme_color_override("font_color", Color("d7b866"))
+	energy_pips.add_theme_font_size_override("font_size", 14)
+	energy_details.add_child(energy_pips)
 	draw_button = Button.new()
 	draw_button.pressed.connect(draw_turn_card)
 	header.add_child(draw_button)
@@ -287,7 +322,12 @@ func build_ui(layer: CanvasLayer) -> void:
 func refresh_ui() -> void:
 	if counters == null:
 		return
-	counters.text = "HULL %d/3  ·  TURN %d  ·  ENERGY %d" % [hull, turn_number, energy]
+	counters.text = "HULL %d/3  ·  TURN %d" % [hull, turn_number]
+	energy_value.text = str(energy)
+	var filled := mini(energy, TURN_ENERGY)
+	energy_pips.text = "●".repeat(filled) + "○".repeat(TURN_ENERGY - filled)
+	if energy > TURN_ENERGY:
+		energy_pips.text += " +%d" % (energy - TURN_ENERGY)
 	var locked := busy or hull <= 0
 	draw_button.text = "Draw blocked" if draw_blocked else "Draw used" if draw_used else "Draw 1 card"
 	draw_button.disabled = locked or draw_used or draw_blocked
