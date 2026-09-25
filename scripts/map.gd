@@ -1,5 +1,7 @@
 extends Node3D
 
+const MAIN_MENU_SCENE := "res://scenes/main_menu.tscn"
+
 var material := ShaderMaterial.new()
 var camera := Camera3D.new()
 var azimuth := 0.0
@@ -35,7 +37,7 @@ func _ready() -> void:
 	var layer := CanvasLayer.new()
 	add_child(layer)
 	var label := Label.new()
-	label.text = "DRAWN TO SEA  /  CARD SAILING\nDrag to pan · Right-drag to orbit · Scroll / pinch to zoom · Space to pause · R to reset"
+	label.text = "DRAWN TO SEA  /  CARD SAILING\nDrag to pan · Right-drag to orbit · Scroll / pinch to zoom · Space to pause · R to reset · Esc for menu"
 	label.position = Vector2(28, 24)
 	label.add_theme_color_override("font_color", Color("e3cda1"))
 	layer.add_child(label)
@@ -119,9 +121,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			zoom_at(event.position, pow(1.0 / 0.9, event.factor))
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_SPACE:
+		if event.is_action_pressed("ui_cancel"):
+			get_tree().change_scene_to_file(MAIN_MENU_SCENE)
+		elif event.keycode == KEY_SPACE:
 			paused = not paused
-		if event.keycode == KEY_R:
+		elif event.keycode == KEY_R:
 			focus = Vector3.ZERO
 			azimuth = 0.0
 			elevation = 0.95

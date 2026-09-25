@@ -2,7 +2,7 @@ extends Control
 
 const MAP_SCENE := "res://scenes/map.tscn"
 # Point this at the next scene once it exists; until then the button shows a notice.
-const FUTURE_SCENE := ""
+const FUTURE_SCENE := "res://scenes/explorer_chart.tscn"
 
 @onready var set_sail_button: Button = %SetSailButton
 @onready var future_button: Button = %FutureButton

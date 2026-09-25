@@ -103,7 +103,7 @@ theme_override_styles/normal = SubResource("button_normal")
 theme_override_styles/hover = SubResource("button_hover")
 theme_override_styles/focus = SubResource("button_hover")
 theme_override_styles/pressed = SubResource("button_normal")
-text = "Coming Soon"
+text = "Explorer's Chart"
 
 [node name="Notice" type="Label" parent="Center/Column"]
 unique_name_in_owner = true
