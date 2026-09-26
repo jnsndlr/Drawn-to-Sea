@@ -12,6 +12,9 @@ const float CELL_PADDING = 1.06;
 const float TRUNK_ALPHA = 0.62;
 
 varying vec2 cell;
+varying float plant_size;
+varying vec2 crown_center;
+varying vec2 crown_radius;
 // 0 at the default oblique view, 1 looking straight down.
 varying float overhead;
 
@@ -19,17 +22,45 @@ void vertex() {
 	float index = INSTANCE_CUSTOM.r;
 	cell = vec2(mod(index, ATLAS_GRID.x), floor(index / ATLAS_GRID.x));
 	float size = INSTANCE_CUSTOM.b * CELL_PADDING;
-	// Looking down from above, a plant should sit centred over its root rather than stand on it.
+	plant_size = INSTANCE_CUSTOM.b;
+	// Match the drawing coordinates in flora_draw.gdshaderinc. Rounded depth
+	// lets overlapping crowns meet gradually instead of swapping whole cards.
+	crown_center = index < 16.0 ? vec2(0.0, 0.02) : (index < 24.0 ? vec2(0.0, -0.3) : vec2(0.0, 0.3));
+	crown_radius = index < 24.0 ? vec2(0.8, 0.75) : vec2(0.85, 0.5);
+	// Trees lose their trunks overhead, but palms retain theirs and must always
+	// pivot around the drawn trunk base (q.y = -0.97 in flora_draw).
 	overhead = smoothstep(0.8, 0.97, INV_VIEW_MATRIX[2].y);
-	// The QuadMesh spans -0.5..0.5: stand it on its bottom edge, nudged toward the camera.
-	VERTEX = vec3(VERTEX.x * size, (VERTEX.y + mix(0.5, 0.0, overhead)) * size, 0.05);
+	bool is_palm = index >= 24.0;
+	float root_offset = 0.97 / (2.0 * CELL_PADDING);
+	float pivot = is_palm ? root_offset : mix(root_offset, 0.0, overhead);
+	float height = (VERTEX.y + pivot) * size;
+	// Screen-up leans away from the camera into the terrain. Give the card
+	// the depth of an upright plant while retaining its camera-facing silhouette.
+	// Limit the slope near overhead, where an upright card would be edge-on.
+	// Use the unshifted root height so recentered tree crowns stay above land too.
+	float sin_pitch = clamp(INV_VIEW_MATRIX[2].y, 0.0, 1.0);
+	float cos_pitch = max(length(INV_VIEW_MATRIX[2].xz), 0.25);
+	float root_height = max((VERTEX.y + root_offset) * size, 0.0);
+	float upright_depth = root_height * sin_pitch / cos_pitch;
+	VERTEX = vec3(VERTEX.x * size, height, upright_depth + 0.005);
 	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(INV_VIEW_MATRIX[0], INV_VIEW_MATRIX[1], INV_VIEW_MATRIX[2], MODEL_MATRIX[3]);
 }
 
 void fragment() {
 	vec4 plant = texture(atlas, (cell + UV) / ATLAS_GRID);
+	// Coverage is a cutout, not translucent foliage. Keep surviving pixels in
+	// the opaque depth pass so MultiMesh instance order cannot affect blending.
+	float cutoff = overhead > 0.5 ? (TRUNK_ALPHA + 1.0) * 0.5 : 0.5;
+	if (plant.a < cutoff) {
+		discard;
+	}
 	ALBEDO = pow(plant.rgb, vec3(2.2));
-	ALPHA = plant.a;
-	// Trunks are stored at a lower coverage: raising the cut-off hides them from overhead.
-	ALPHA_SCISSOR_THRESHOLD = overhead > 0.5 ? (TRUNK_ALPHA + 1.0) * 0.5 : 0.5;
+	vec2 q = vec2(UV.x * 2.0 - 1.0, 1.0 - UV.y * 2.0) * CELL_PADDING;
+	vec2 crown = (q - crown_center) / crown_radius;
+	float roundness = sqrt(max(1.0 - dot(crown, crown), 0.0));
+	vec3 surface = VERTEX;
+	surface.z += roundness * plant_size * 0.35;
+	vec4 clip = PROJECTION_MATRIX * vec4(surface, 1.0);
+	float ndc_depth = clip.z / clip.w;
+	DEPTH = CLIP_SPACE_FAR == -1.0 ? ndc_depth * 0.5 + 0.5 : ndc_depth;
 }

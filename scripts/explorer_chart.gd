@@ -24,11 +24,11 @@ const TYPICAL_PLANT_SIZE := 0.5
 
 # name, shader parameter, min, max, step, default
 const CONDITIONS := [
-	["Wave height", "wave_height", 0.0, 6.0, 0.05, 1.5],
-	["Wave length", "wave_length", 0.3, 3.0, 0.05, 1.0],
+	["Wave height", "wave_height", 0.0, 6.0, 0.05, 1.0],
+	["Wave length", "wave_length", 0.3, 3.0, 0.05, 0.6],
 	["Wave speed", "wave_speed", 0.0, 4.0, 0.05, 1.0],
-	["Chop", "chop", 0.0, 3.0, 0.05, 1.0],
-	["Noise", "noise_amount", 0.0, 3.0, 0.05, 1.0],
+	["Chop", "chop", 0.0, 3.0, 0.05, 0.25],
+	["Noise", "noise_amount", 0.0, 3.0, 0.05, 0.8],
 	["Wind direction", "wind_angle", -180.0, 180.0, 1.0, 0.0],
 ]
 

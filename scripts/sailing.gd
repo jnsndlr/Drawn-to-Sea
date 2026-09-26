@@ -54,7 +54,7 @@ var rng := RandomNumberGenerator.new()
 func setup(map_node: Node3D, layer: CanvasLayer) -> void:
 	map = map_node
 	rng.randomize()
-	ship = preload("res://scripts/ship_visual.gd").new()
+	ship = preload("res://scripts/player_ship.gd").new()
 	add_child(ship)
 	wake = preload("res://scripts/ship_wake.gd").new()
 	wake.geography_texture = map.geography.texture
