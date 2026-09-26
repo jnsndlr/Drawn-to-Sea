@@ -87,10 +87,14 @@ float paper_cracks(vec2 p) {
 	return max(big * 0.8, small * 0.5) * (0.5 + 0.5 * vnoise(p * 4.0));
 }
 
+// The chart is torn where this passes 1.0. The noise dips at most 0.06, so the
+// inset keeps the tear strictly inside the mesh and its straight border never shows.
+const float EDGE_INSET = 0.07;
+
 float edge_wear(vec2 p) {
 	vec2 e = abs(p) / (chart_size * 0.5);
 	float edge = pow(pow(e.x, 6.0) + pow(e.y, 6.0), 1.0 / 6.0);
-	return edge + (fbm(p * 1.3 + 40.0) - 0.5) * 0.10 + (vnoise(p * 9.0) - 0.5) * 0.02;
+	return edge + EDGE_INSET + (fbm(p * 1.3 + 40.0) - 0.5) * 0.10 + (vnoise(p * 9.0) - 0.5) * 0.02;
 }
 
 float height_at(vec2 p) {
